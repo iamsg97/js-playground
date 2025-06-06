@@ -1,17 +1,94 @@
 ;(() => {
     /**
-     * Global state object to manage todo items and editing state
-     * @type {Object}
-     * @property {string[]} todos - Array of todo items
-     * @property {number} editIndex - Index of the todo being edited, -1 means no todo is being edited
+     * Creates a stateful value and a function to update it, with optional render callback.
+     *
+     * @template T
+     * @param {T} initialVal - The initial state value.
+     * @param {(value: T) => void} [renderFn] - Optional function to call when the state updates.
+     * @returns {[() => T, (newVal: T | ((prevVal: T) => T)) => void]}
+     *   A tuple with a getter for the current state and a setter to update the state.
      */
-    const state = {
-        todos: [],
-        editIndex: -1 // Index of the todo being edited, -1 means no todo is being edited
+    function useState(initialVal, renderFn) {
+        let value = initialVal
+
+        /**
+         * Updates the state value and triggers a render function if provided.
+         *
+         * @param {any|function(any): any} newVal - The new value to set, or a function that receives the current value and returns the new value.
+         * @returns {void}
+         */
+        const setState = newVal => {
+            if (typeof newVal === 'function') {
+                value = newVal(value)
+            } else {
+                value = newVal
+            }
+            if (renderFn && typeof renderFn === 'function') {
+                renderFn()
+            } else {
+                console.warn(
+                    'No render function provided or it is not a function'
+                )
+            }
+        }
+        /**
+         * Returns the current value of the state.
+         *
+         * @returns {*} The current state value.
+         */
+        const getState = () => value
+
+        return [getState, setState]
     }
-    // For backward compatibility, alias are created
-    // to access the state properties directly
-    const todos = state.todos
+
+    /**
+     * Renders the TODO application UI by creating and appending DOM elements
+     * to the root element. This function creates the main container, title,
+     * input field, add button, and the list of todo items.
+     *
+     * Uses the useState hooks to access current todo items and edit state.
+     *
+     * @returns {void}
+     * @throws {Error} When the root element is not found in the DOM
+     */
+    const render = () => {
+        const root = document.querySelector('#root')
+
+        if (!root) {
+            throw new Error('Root element not found in the DOM')
+        }
+
+        // clear the prev DOM
+        root.innerHTML = ''
+        const component = todoComponent()
+
+        console.debug(component)
+
+        if (component.container && component.children) {
+            root.appendChild(component.container)
+            for (const child of component.children) {
+                if (child instanceof HTMLElement) {
+                    component.container.appendChild(child)
+                }
+            }
+        } else if (component instanceof HTMLElement) {
+            root.appendChild(component)
+        } else if (Array.isArray(component)) {
+            for (const item of component) {
+                if (item instanceof HTMLElement) {
+                    root.appendChild(item)
+                }
+            }
+        } else {
+            throw new TypeError(
+                'Component must be an HTMLElement or an array of HTMLElements'
+            )
+        }
+    }
+
+    const [getTodos, setTodos] = useState([], render)
+    const [getEditIndex, setEditIndex] = useState(-1, render)
+
     /**
      * Initializes the TODO application after the DOM is loaded.
      * Renders the initial UI and sets up event delegation for adding, editing, and deleting todos.
@@ -34,34 +111,39 @@
             if (event.target.id === 'add-todo-button') {
                 const todoText = input.value.trim()
                 if (todoText) {
-                    if (state.editIndex !== -1) {
-                        todos[state.editIndex] = todoText
-                        state.editIndex = -1 // reset edit index after updating
-                    } else todos.push(todoText)
+                    if (getEditIndex() !== -1) {
+                        setTodos(prev => {
+                            const updatedTodos = [...prev]
+                            updatedTodos[getEditIndex()] = todoText // update the todo at editIndex
+                            return updatedTodos
+                        })
+                        setEditIndex(-1) // reset edit index after updating
+                    } else {
+                        setTodos(prev => [...prev, todoText])
+                    }
                 }
                 input.value = ''
-                render()
             }
 
-            todos.forEach((_todo, index) => {
+            getTodos().forEach((_todo, index) => {
                 // delete_todos
                 if (event.target.id === `delete-todo-${index}`) {
-                    todos.splice(index, 1)
+                    setTodos(
+                        prev => prev.filter((_, i) => i !== index) // remove todo at index
+                    )
                     // deleting the todo being edited
-                    if (state.editIndex === index) {
-                        state.editIndex = -1 // reset edit index if the edited todo is deleted
+                    if (getEditIndex() === index) {
+                        setEditIndex(-1) // reset edit index if the edited todo is deleted
                         input.value = ''
-                    } else if (state.editIndex > index) {
+                    } else if (getEditIndex() > index) {
                         // we are deleting an item before the edited one
-                        state.editIndex-- // adjust edit index if necessary
+                        setEditIndex(prev => prev - 1) // adjust edit index if necessary
                     }
-                    render()
                 }
                 // edit_todos
                 if (event.target.id === `edit-todo-${index}`) {
-                    state.editIndex = index
-                    input.value = todos[index]
-                    render()
+                    setEditIndex(index)
+                    input.value = getTodos()[index]
                 }
             })
         })
@@ -91,7 +173,7 @@
             class: 'todo-input',
             type: 'text',
             placeholder:
-                state.editIndex !== -1
+                getEditIndex() !== -1
                     ? 'Edit your todo...'
                     : 'Add a new todo...'
         })
@@ -102,13 +184,13 @@
                 class: 'todo-button',
                 type: 'button'
             },
-            state.editIndex !== -1 ? 'Update Todo' : 'Add Todo'
+            getEditIndex() !== -1 ? 'Update Todo' : 'Add Todo'
         )
         const todoList = createElement('ul', {
             id: 'todo-list',
             class: 'todo-list'
         })
-        const items = todos.map((todo, index) => {
+        const items = getTodos().map((todo, index) => {
             return createElement(
                 'li',
                 { class: 'todo-item' },
@@ -152,51 +234,6 @@
         return {
             container: todoContainer,
             children: [title, input, addButton, todoList]
-        }
-    }
-    /**
-     * Renders the TODO application UI by creating and appending DOM elements
-     * to the root element. This function creates the main container, title,
-     * input field, add button, and the list of todo items.
-     *
-     * The function accesses the global 'state' object to render the current list
-     * of todo items and handle edit state.
-     *
-     * @returns {void}
-     * @throws {Error} When the root element is not found in the DOM
-     */
-    const render = () => {
-        const root = document.querySelector('#root')
-
-        if (!root) {
-            throw new Error('Root element not found in the DOM')
-        }
-
-        // clear the prev DOM
-        root.innerHTML = ''
-        const component = todoComponent()
-
-        console.debug(component)
-
-        if (component.container && component.children) {
-            root.appendChild(component.container)
-            for (const child of component.children) {
-                if (child instanceof HTMLElement) {
-                    component.container.appendChild(child)
-                }
-            }
-        } else if (component instanceof HTMLElement) {
-            root.appendChild(component)
-        } else if (Array.isArray(component)) {
-            for (const item of component) {
-                if (item instanceof HTMLElement) {
-                    root.appendChild(item)
-                }
-            }
-        } else {
-            throw new TypeError(
-                'Component must be an HTMLElement or an array of HTMLElements'
-            )
         }
     }
 
