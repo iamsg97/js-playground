@@ -1,9 +1,9 @@
-(() => {
+;(() => {
     /**
      * Global array to hold todo items
      * @type {string[]}
      */
-    let todos = [];
+    const todos = []
 
     /**
      * Initializes the TODO application after the DOM is loaded.
@@ -17,26 +17,25 @@
      * @returns {void}
      */
     window.addEventListener('DOMContentLoaded', () => {
-        render();
+        render()
 
-        document.querySelector('#root')
-            .addEventListener('click', (event) => {
-                // add_todos
-                if (event.target.id === 'add-todo-button') {
-                    const input = document.querySelector('#todo-input');
-                    todos.push(input?.value?.trim());
-                    input.value = '';
-                    render();
+        document.querySelector('#root').addEventListener('click', event => {
+            // add_todos
+            if (event.target.id === 'add-todo-button') {
+                const input = document.querySelector('#todo-input')
+                todos.push(input?.value?.trim())
+                input.value = ''
+                render()
+            }
+            // delete_todos
+            todos.forEach((_todo, index) => {
+                if (event.target.id === `delete-todo-${index}`) {
+                    todos.splice(index, 1)
+                    render()
                 }
-                // delete_todos
-                todos.forEach((_todo, index) => {
-                    if (event.target.id === `delete-todo-${index}`) {
-                        todos.splice(index, 1);
-                        render();
-                    }
-                })
-            });
-    });
+            })
+        })
+    })
 
     /**
      * Creates and returns the main TODO application UI components as an object.
@@ -56,34 +55,34 @@
         const todoContainer = createElement('div', {
             id: 'todo-container',
             class: 'todo-container'
-        });
-        const title = createElement('h1', {class: 'todo-title'}, 'Todo List');
+        })
+        const title = createElement('h1', { class: 'todo-title' }, 'Todo List')
         const input = createElement('input', {
             id: 'todo-input',
             class: 'todo-input',
             type: 'text',
             placeholder: 'Add a new todo...'
-        });
+        })
         const addButton = createElement(
             'button',
             {
                 id: 'add-todo-button',
                 class: 'todo-button',
-                type: 'button',
+                type: 'button'
             },
             'Add Todo'
-        );
+        )
         const todoList = createElement('ul', {
             id: 'todo-list',
             class: 'todo-list'
-        });
+        })
         const items = todos.map((todo, index) => {
             return createElement(
                 'li',
-                {class: 'todo-item'},
+                { class: 'todo-item' },
                 createElement(
                     'span',
-                    {class: 'text', id: `todo-${index}`},
+                    { class: 'text', id: `todo-${index}` },
                     todo
                 ),
                 createElement(
@@ -95,9 +94,24 @@
                     },
                     'Delete'
                 )
-            );
+            )
         })
-        return {todoContainer, title, input, addButton, todoList, items};
+
+        // Add items to the todo list
+        if (items.length === 0) {
+            const emptyMessage = createElement(
+                'li',
+                { class: 'empty-message' },
+                'No todos available. Add a new todo!'
+            )
+            todoList.appendChild(emptyMessage)
+        }
+        todoList.append(...items)
+
+        return {
+            container: todoContainer,
+            children: [title, input, addButton, todoList]
+        }
     }
 
     /**
@@ -112,22 +126,39 @@
      * @throws {Error} When the root element is not found in the DOM
      */
     const render = () => {
-        const root = document.querySelector('#root');
+        const root = document.querySelector('#root')
+
+        if (!root) {
+            throw new Error('Root element not found in the DOM')
+        }
+
         // clear the prev DOM
-        if (root) {
-            root.innerHTML = '';
+        root.innerHTML = ''
+        const component = todoComponent()
+
+        console.debug(component)
+
+        if (component.container && component.children) {
+            root.appendChild(component.container)
+            for (const child of component.children) {
+                if (child instanceof HTMLElement) {
+                    component.container.appendChild(child)
+                }
+            }
+        } else if (component instanceof HTMLElement) {
+            root.appendChild
+        } else if (Array.isArray(component)) {
+            for (const item of component) {
+                if (item instanceof HTMLElement) {
+                    root.appendChild(item)
+                }
+            }
+        } else {
+            throw new TypeError(
+                'Component must be an HTMLElement or an array of HTMLElements'
+            )
         }
-        const {todoContainer, title, input, addButton, todoList, items} =
-            todoComponent();
-        root.appendChild(todoContainer);
-        todoContainer.appendChild(title);
-        todoContainer.appendChild(input);
-        todoContainer.appendChild(addButton);
-        todoContainer.appendChild(todoList);
-        if (items.length) {
-            items.forEach(item => todoList.appendChild(item));
-        }
-    };
+    }
 
     /**
      * @typedef {Object} ElementAttributes
@@ -147,32 +178,32 @@
      * @throws {DOMException} When tagName is not a valid HTML element name
      */
     function createElement(tagName, attributes = {}, ...children) {
-        const element = document.createElement(tagName);
+        const element = document.createElement(tagName)
         for (const [key, value] of Object.entries(attributes)) {
             if (key === 'class') {
-                element.classList.add(...value.split(' '));
+                element.classList.add(...value.split(' '))
             } else if (key === 'style') {
                 // style can be an object with CSS properties, it can be more than one
-                element.style.cssText = extractStyle(Object.entries(value));
+                element.style.cssText = extractStyle(Object.entries(value))
             } else if (key === 'dataset') {
                 // custom HTML data attributes
                 for (const [dataKey, dataValue] of Object.entries(value)) {
-                    element.dataset[dataKey] = dataValue;
+                    element.dataset[dataKey] = dataValue
                 }
             } else {
-                element.setAttribute(key, value);
+                element.setAttribute(key, value)
             }
         }
         for (const child of children) {
             if (typeof child === 'string') {
-                element.appendChild(document.createTextNode(child));
+                element.appendChild(document.createTextNode(child))
             } else if (child instanceof Node) {
-                element.appendChild(child);
+                element.appendChild(child)
             } else {
-                throw new TypeError('Children must be a string or a Node');
+                throw new TypeError('Children must be a string or a Node')
             }
         }
-        return element;
+        return element
     }
 
     /**
@@ -181,6 +212,6 @@
      * @returns {string} CSS string with properties joined by semicolons
      */
     function extractStyle(entries) {
-        return entries.map(([key, value]) => `${key}: ${value}`).join(';');
+        return entries.map(([key, value]) => `${key}: ${value}`).join(';')
     }
-})();
+})()
