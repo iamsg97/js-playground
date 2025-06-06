@@ -4,14 +4,30 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>TODO App</title>
-        <!--    <link rel="stylesheet" href="styles.css">-->
+        <title>Task Manager - TODO App</title>
+        <link rel="stylesheet" href="styles.css" />
     </head>
     <body>
-        <div class="container">
-            <!-- trying to make react -->
-            <div id="root"></div>
-        </div>
+        <!-- TODO App header -->
+        <header class="app-header">
+            <div class="container">
+                <div class="header-content">
+                    <a href="#" class="app-logo">
+                        <div class="logo-icon">SG</div>
+                        <span>TODO App</span>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main content area -->
+        <main class="main-content">
+            <div class="container">
+                <!-- React-like root element -->
+                <div id="root"></div>
+            </div>
+        </main>
+
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script src="index.js" defer></script>
     </body>

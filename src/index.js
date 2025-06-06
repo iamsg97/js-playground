@@ -161,13 +161,15 @@
      *   - container {HTMLDivElement} - Main container for the todo application
      *   - children {HTMLElement[]} - Array containing title, input, addButton, and todoList
      * @throws {TypeError} When children passed to createElement are not string or Node
-     */
-    function todoComponent() {
+     */ function todoComponent() {
         const todoContainer = createElement('div', {
             id: 'todo-container',
             class: 'todo-container'
         })
         const title = createElement('h1', { class: 'todo-title' }, 'Todo List')
+
+        // Input section with better structure
+        const inputSection = createElement('div', { class: 'input-section' })
         const input = createElement('input', {
             id: 'todo-input',
             class: 'todo-input',
@@ -186,38 +188,48 @@
             },
             getEditIndex() !== -1 ? 'Update Todo' : 'Add Todo'
         )
+
+        inputSection.appendChild(input)
+        inputSection.appendChild(addButton)
+
         const todoList = createElement('ul', {
             id: 'todo-list',
             class: 'todo-list'
         })
+
         const items = getTodos().map((todo, index) => {
-            return createElement(
-                'li',
-                { class: 'todo-item' },
-                createElement(
-                    'span',
-                    { class: 'text', id: `todo-${index}` },
-                    todo
-                ),
-                createElement(
-                    'button',
-                    {
-                        id: `delete-todo-${index}`,
-                        class: 'delete-button',
-                        type: 'button'
-                    },
-                    'Delete'
-                ),
-                createElement(
-                    'button',
-                    {
-                        id: `edit-todo-${index}`,
-                        class: 'edit-button',
-                        type: 'button'
-                    },
-                    'Edit'
-                )
+            const todoItem = createElement('li', { class: 'todo-item' })
+            const textSpan = createElement(
+                'span',
+                { class: 'text', id: `todo-${index}` },
+                todo
             )
+            const buttonGroup = createElement('div', { class: 'button-group' })
+            const editButton = createElement(
+                'button',
+                {
+                    id: `edit-todo-${index}`,
+                    class: 'edit-button',
+                    type: 'button'
+                },
+                'Edit'
+            )
+            const deleteButton = createElement(
+                'button',
+                {
+                    id: `delete-todo-${index}`,
+                    class: 'delete-button',
+                    type: 'button'
+                },
+                'Delete'
+            )
+
+            buttonGroup.appendChild(editButton)
+            buttonGroup.appendChild(deleteButton)
+            todoItem.appendChild(textSpan)
+            todoItem.appendChild(buttonGroup)
+
+            return todoItem
         })
 
         // Add items to the todo list
@@ -228,12 +240,33 @@
                 'No todos available. Add a new todo!'
             )
             todoList.appendChild(emptyMessage)
+        } else {
+            todoList.append(...items)
         }
-        todoList.append(...items)
+
+        // Stats section
+        const statsSection = createElement('div', { class: 'stats-section' })
+        const statsTitle = createElement(
+            'div',
+            { class: 'stats-title' },
+            'Statistics'
+        )
+        const totalStat = createElement('div', { class: 'stats-item' })
+        totalStat.appendChild(createElement('span', {}, 'Total tasks:'))
+        totalStat.appendChild(
+            createElement(
+                'span',
+                { class: 'stats-value' },
+                getTodos().length.toString()
+            )
+        )
+
+        statsSection.appendChild(statsTitle)
+        statsSection.appendChild(totalStat)
 
         return {
             container: todoContainer,
-            children: [title, input, addButton, todoList]
+            children: [title, inputSection, todoList, statsSection]
         }
     }
 
