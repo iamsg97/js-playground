@@ -4,7 +4,8 @@
     "type": "module",
     "private": true,
     "scripts": {
-        "start": "bun run src/index.html"
+        "dev:local": "bun run src/index.html",
+        "build": "rsync -av --exclude='*.ts' src/ site/"
     },
     "devDependencies": {
         "@types/bun": "latest"
