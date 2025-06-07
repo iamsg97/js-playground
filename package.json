@@ -1,16 +1,25 @@
 {
     "name": "js-playground",
+    "version": "1.0.0",
     "module": "index.js",
     "type": "module",
     "private": true,
     "scripts": {
         "dev:local": "bun run src/index.html",
-        "build": "rsync -av --exclude='*.ts' src/ site/"
+        "build": "rsync -av --exclude='*.ts' src/ dist/",
+        "start": "npx serve dist -p ${PORT:-3000}",
+        "dev": "npx serve src -p 3000"
+    },
+    "dependencies": {
+        "serve": "^14.2.1"
     },
     "devDependencies": {
         "@types/bun": "latest"
     },
     "peerDependencies": {
         "typescript": "^5"
+    },
+    "engines": {
+        "node": ">=18"
     }
 }
