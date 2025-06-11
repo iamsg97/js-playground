@@ -4,12 +4,11 @@
     "type": "commonjs",
     "private": true,
     "scripts": {
-        "build": "mkdir -p dist && cp -r src/* dist/",
-        "start": "npx serve dist -p $PORT",
-        "dev": "npx serve src -p 3000"
+        "start": "node server.js",
+        "dev": "node server.js"
     },
     "dependencies": {
-        "serve": "^14.2.1"
+        "express": "^4.21.2"
     },
     "engines": {
         "node": ">=18.0.0"
