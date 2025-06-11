@@ -1,27 +1,17 @@
 {
     "name": "js-playground",
     "version": "1.0.0",
-    "module": "index.js",
-    "type": "module",
+    "type": "commonjs",
     "private": true,
     "scripts": {
-        "dev:local": "bun run src/index.html",
-        "build:site": "rsync -av --exclude='*.ts' src/ dist/",
-        "build": "cp -r src/* dist/ || mkdir -p dist && cp -r src/* dist/",
-        "start": "serve dist -p ${PORT:-3000}",
-        "dev": "serve src -p 3000"
+        "build": "mkdir -p dist && cp -r src/* dist/",
+        "start": "npx serve dist -p $PORT",
+        "dev": "npx serve src -p 3000"
     },
     "dependencies": {
         "serve": "^14.2.1"
     },
-    "devDependencies": {
-        "@types/bun": "latest"
-    },
-    "peerDependencies": {
-        "typescript": "^5"
-    },
     "engines": {
-        "node": ">=18.0.0",
-        "npm": ">=8.0.0"
+        "node": ">=18.0.0"
     }
 }
